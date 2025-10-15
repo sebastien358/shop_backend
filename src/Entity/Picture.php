@@ -12,16 +12,16 @@ class Picture
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['picture'])]
+    #[Groups(['pictures'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['picture'])]
+    #[Groups(['pictures'])]
     private ?string $filename = null;
 
     #[ORM\ManyToOne(targetEntity: Product::class, inversedBy: 'pictures')]
     #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
-    #[Groups(['picture'])]
+    #[Groups(['pictures'])]
     private ?Product $product = null;
 
     public function getId(): ?int

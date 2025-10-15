@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -32,6 +34,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToOne(targetEntity: Cart::class, inversedBy: "user", orphanRemoval: true)]
     #[Groups(['users', 'user'])]
     private Cart $cart;
+
+    #[ORM\OneToMany(targetEntity: Command::class, mappedBy: "user", cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[Groups(['users', 'user'])]
+    private Collection $command;
+
+    public function __construct()
+    {
+        $this->command = new ArrayCollection();
+    }
 
     /**
      * @var string The hashed password
@@ -131,4 +142,29 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
        return $this;
    }
+
+   public function getCommand(): Collection
+   {
+       return $this->command;
+   }
+
+    public function addCommand(Command $command): self
+    {
+        if (!$this->command->contains($command)) {
+            $this->command->add($command);
+            $command->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCommand(Command $command): self
+    {
+        if ($this->command->contains($command)) {
+            $this->command->removeElement($command);
+            $command->setUser(null);
+        }
+
+        return $this;
+    }
 }

@@ -1,0 +1,89 @@
+<?php
+
+namespace App\Controller;
+
+use App\Entity\Cart;
+use App\Entity\Command;
+use App\Entity\CommandItems;
+use App\Form\CommandType;
+use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
+
+#[Route('/api/command')]
+final class CommandController extends AbstractController
+{
+    private $entityManager;
+    private $logger;
+
+    public function __construct(EntityManagerInterface $entityManager, LoggerInterface $logger)
+    {
+        $this->entityManager = $entityManager;
+        $this->logger = $logger;
+    }
+
+    #[Route('/add', methods: ['POST'])]
+    public function add(Request $request): JsonResponse
+    {
+        try {
+            $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+
+            $user = $this->getUser();
+
+            $command = new Command();
+            $command->setUser($user);
+
+            $form = $this->createForm(CommandType::class, $command);
+            $form->submit($data);
+            if ($form->isSubmitted() && $form->isValid()) {
+                $cart = $this->entityManager->getRepository(Cart::class)->findOneBy(['user' => $user]);
+                $items = $cart->getCartItems();
+                foreach ($items as $item) {
+                    $commandItems = new CommandItems();
+                    $commandItems->setCommand($command);
+                    $commandItems->setProduct($item->getProduct());
+                    $commandItems->setTitle($item->getTitle());
+                    $commandItems->setPrice($item->getPrice());
+                    $commandItems->setQuantity($item->getQuantity());
+                    $this->entityManager->persist($commandItems);
+                }
+
+                $this->entityManager->persist($command);
+
+            } else {
+                $errors = $this->getErrorMessages($form);
+                return new JsonResponse(['errors' => $errors], Response::HTTP_BAD_REQUEST);
+            }
+
+            try {
+                $this->entityManager->flush();
+                return new JsonResponse(['success' => true, 'message' => 'successFully add command user'], Response::HTTP_OK);
+            } catch (\Exception $e) {
+                $this->logger->error('error add command user', ['error' => $e->getMessage()]);
+                return new JsonResponse(['errors' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+            }
+        } catch(\Throwable $e) {
+            $this->logger->error('error add command user', ['error' => $e->getMessage()]);
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private function getErrorMessages(FormInterface $form): array
+    {
+        $errors = [];
+        foreach ($form->getErrors() as $key => $error) {
+            $errors[] = $error->getMessage();
+        }
+        foreach ($form->all() as $child) {
+            if ($child->isSubmitted() && !$child->isValid()) {
+                $errors[$child->getName()] = $this->getErrorMessages($child);
+            }
+        }
+        return $errors;
+    }
+}

@@ -14,6 +14,7 @@ class Category
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['categories'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 125)]
@@ -22,7 +23,6 @@ class Category
 
     #[ORM\OneToMany(targetEntity: Product::class, mappedBy: 'category', orphanRemoval: true)]
     #[ORM\JoinColumn(nullable: false, onDelete: 'cascade')]
-    #[Groups(['categories'])]
     private Collection $products;
 
     public function __construct()

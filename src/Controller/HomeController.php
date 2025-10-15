@@ -35,7 +35,7 @@ final class HomeController
             if (empty($products)) {
                 return new JsonResponse(['message' => 'No product'], Response::HTTP_NO_CONTENT);
             }
-            $dataProducts = $this->productService->getProductData($products, $serializer);
+            $dataProducts = $this->productService->getProductData($request, $products, $serializer);
 
             return new JsonResponse($dataProducts, Response::HTTP_OK);
         } catch (\Throwable $e) {
@@ -49,7 +49,7 @@ final class HomeController
         try {
             $search = $request->query->getString('search');
             $products = $this->entityManager->getRepository(Product::class)->findAllSearch($search);
-            $dataProducts = $this->productService->getProductData($products, $serializer);
+            $dataProducts = $this->productService->getProductData($request, $products, $serializer);
 
             return new JsonResponse($dataProducts);
         } catch (\Throwable $e) {
@@ -65,7 +65,7 @@ final class HomeController
             $maxPrice = $request->query->getInt('maxPrice');
             $products = $this->entityManager->getRepository(Product::class)->findAllPrice($minPrice, $maxPrice);
 
-            $dataProducts = $this->productService->getProductData($products, $serializer);
+            $dataProducts = $this->productService->getProductData($request, $products, $serializer);
             return new JsonResponse($dataProducts);
         } catch (\Throwable $e) {
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -78,7 +78,7 @@ final class HomeController
         try {
             $category = $request->query->getString('category');
             $products = $this->entityManager->getRepository(Product::class)->findAllCategory($category);
-            $dataProducts = $this->productService->getProductData($products, $serializer);
+            $dataProducts = $this->productService->getProductData($request, $products, $serializer);
 
             return new JsonResponse($dataProducts);
         } catch (\Throwable $e) {

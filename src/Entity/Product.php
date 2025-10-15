@@ -41,10 +41,15 @@ class Product
     #[Groups(['products', 'product'])]
     private Collection $cartItems;
 
+    #[ORM\OneToMany(targetEntity: CommandItems::class, mappedBy: 'product', orphanRemoval: true)]
+    #[Groups(['products', 'product'])]
+    private Collection $commands;
+
     public function __construct()
     {
         $this->pictures = new ArrayCollection();
         $this->cartItems = new ArrayCollection();
+        $this->commands = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -150,5 +155,10 @@ class Product
         }
 
         return $this;
+    }
+
+    public function getCommands(): Collection
+    {
+        return $this->commands;
     }
 }

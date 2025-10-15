@@ -100,7 +100,7 @@ final class CartController extends AbstractController
     }
 
     #[Route('/delete/item/{id}', methods: ['DELETE'])]
-    public function delete(Request $request, int $id): JsonResponse
+    public function deleteItem(Request $request, int $id): JsonResponse
     {
         try {
             $user = $this->getUser();
@@ -126,8 +126,38 @@ final class CartController extends AbstractController
                 $this->logger->error('Item removed from cart', ['error' => $e->getMessage()]);
                 return new JsonResponse(['message' => 'Item removed from cart'], Response::HTTP_BAD_REQUEST);
             }
+
         } catch (\Throwable $e) {
             $this->logger->error('Erreur lors de la récupération des items du panier', ['error' => $e->getMessage()]);
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    #[Route('/add/item/{id}', methods: ['POST'])]
+    public function addItem(Request $request, int $id): JsonResponse
+    {
+        try {
+            $user = $this->getUser();
+
+            $cart = $this->entityManager->getRepository(Cart::class)->findOneBy(['user' => $user]);
+            if (empty($cart)) {
+                return new JsonResponse(['message' => 'Cart not found'], Response::HTTP_NOT_FOUND);
+            }
+
+            $itemToCart = $this->entityManager->getRepository(CartItems::class)->findOneBy(['cart' => $cart, 'id' => $id]);
+            $itemToCart->setQuantity($itemToCart->getQuantity() + 1);
+            $this->entityManager->persist($itemToCart);
+
+            try {
+                $this->entityManager->flush();
+                return new JsonResponse(['success' => true, 'message' => 'Item added to cart'], Response::HTTP_OK);
+            } catch (\Exception $e) {
+                $this->logger->error('Item added to cart', ['error' => $e->getMessage()]);
+                return new JsonResponse(['message' => 'Item added to cart'], Response::HTTP_BAD_REQUEST);
+            }
+
+        } catch(\Throwable $e) {
+            $this->logger->error('Error add item to cart', ['error' => $e->getMessage()]);
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
