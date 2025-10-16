@@ -2,7 +2,6 @@
 
 namespace App\Controller\Admin;
 
-use App\Entity\Picture;
 use App\Entity\Product;
 use App\Form\ProductType;
 use App\Services\FileUploader;
@@ -16,7 +15,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use function Symfony\Component\Translation\t;
+use Symfony\Component\Serializer\SerializerInterface;
 
 #[Route('/api/admin')]
 #[IsGranted('ROLE_ADMIN')]
@@ -37,10 +36,19 @@ class ProductAdminController extends AbstractController
     }
 
     #[Route('/product/list', methods: ['GET'])]
-    public function list(): JsonResponse
+    public function list(Request $request, SerializerInterface $serializer): JsonResponse
     {
         try {
+            $page = $request->query->getInt('page', 1);
+            $limit = $request->query->getInt('limit', 20);
+            $products = $this->entityManager->getRepository(Product::class)->findAllProductPerPageAdmin($page, $limit);
+            if(empty($products)){
+                return new JsonResponse(['error' => 'No products found'], Response::HTTP_NO_CONTENT);
+            }
+            $total = $this->entityManager->getRepository(Product::class)->findAllCountProducts();
 
+            $dataProducts = $this->productService->getProductData($request, $products, $serializer);
+            return new JsonResponse(['total' => $total, 'products' => $dataProducts], Response::HTTP_OK);
         } catch(\Throwable $e) {
             $this->logger->error('error recovery products', ['error' => $e->getMessage()]);
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -53,7 +61,8 @@ class ProductAdminController extends AbstractController
         try {
             $product = new Product();
             $form = $this->createForm(ProductType::class, $product);
-            $form->submit($request->request->all());
+            $data = $request->request->all();
+            $form->submit($data);
 
             if (!$form->isSubmitted() && !$form->isValid()) {
                 $errors = $this->getErrorMessages($form);
@@ -78,6 +87,39 @@ class ProductAdminController extends AbstractController
         } catch (\Throwable $e) {
             $this->logger->error('error recovery products', ['error' => $e->getMessage()]);
             return new JsonResponse(['error' => $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR]);
+        }
+    }
+
+    #[Route('/product/delete/{id}', methods: ['DELETE'])]
+    public function deleteProduct(int $id): JsonResponse
+    {
+        try {
+            $product = $this->entityManager->getRepository(Product::class)->find($id);
+            if (empty($product)) {
+                return new JsonResponse(['error' => 'Product not found'], Response::HTTP_NO_CONTENT);
+            }
+
+            foreach ($product->getPictures() as $picture) {
+               $fileName = $this->getParameter('images_directory') . '/' . $picture->getFileName();
+               if (file_exists($fileName)) {
+                   unlink($fileName);
+               }
+                $this->entityManager->remove($picture);
+            }
+
+            $this->entityManager->remove($product);
+
+            try {
+                $this->entityManager->flush();
+                return new JsonResponse(['success' => true, 'success delete product' => Response::HTTP_CREATED]);
+            } catch (\Exception $e) {
+                $this->logger->error('error recovery products', ['error' => $e->getMessage()]);
+                return new JsonResponse(['error' => $e->getMessage(), Response::HTTP_BAD_REQUEST]);
+            }
+
+        } catch (\Throwable $e) {
+            $this->logger->error('error recovery products', ['error' => $e->getMessage()]);
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 

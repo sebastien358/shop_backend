@@ -33,7 +33,6 @@ class CategoryAdminController extends AbstractController
             if (empty($categories)) {
                 return new JsonResponse(['success' => false, 'message' => 'No categories found'], Response::HTTP_NOT_FOUND);
             }
-
             $dataCategories = $serializer->normalize($categories, 'json', ['groups' => ['categories']]);
             return new JsonResponse($dataCategories, Response::HTTP_OK);
         } catch(\Throwable $e) {

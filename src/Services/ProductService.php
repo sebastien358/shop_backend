@@ -26,7 +26,6 @@ final class ProductService
                 }
             ]);
 
-
             foreach ($dataProducts as &$product) {
                 if (is_array($product['pictures'])) {
                     foreach ($product['pictures'] as &$picture) {
