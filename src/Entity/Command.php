@@ -6,6 +6,7 @@ use App\Repository\CommandRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: CommandRepository::class)]
 class Command
@@ -13,34 +14,44 @@ class Command
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['commands'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 125)]
+    #[Groups(['commands'])]
     private ?string $firstName = null;
 
     #[ORM\Column(length: 125)]
+    #[Groups(['commands'])]
     private ?string $lastName = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['commands'])]
     private ?string $address = null;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['commands'])]
     private ?string $zipCode = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['commands'])]
     private ?string $city = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['commands'])]
     private ?string $country = null;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['commands'])]
     private ?string $phoneNumber = null;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'commands')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    #[Groups(['commands'])]
     private ?User $user = null;
 
     #[ORM\OneToMany(targetEntity: CommandItems::class, mappedBy: 'command', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[Groups(['commands'])]
     private Collection $commandItems;
 
     public function __construct()

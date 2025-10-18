@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Entity\Picture;
 use Doctrine\ORM\EntityManagerInterface;
 
-final class ProductService
+class ProductService
 {
     private $fileUploader;
     private $entityManager;

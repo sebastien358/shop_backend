@@ -55,7 +55,7 @@ final class RegisterController extends AbstractController
         }
 
         $user->setPassword($this->passwordHasher->hashPassword($user, $user->getPassword()));
-        $user->setRoles(['ROLE_ADMIN']);
+        $user->setRoles(['ROLE_USER']);
         $cart = new Cart();
         $cart->setUser($user);
         $user->setCart($cart);

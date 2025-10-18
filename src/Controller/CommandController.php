@@ -6,6 +6,7 @@ use App\Entity\Cart;
 use App\Entity\Command;
 use App\Entity\CommandItems;
 use App\Form\CommandType;
+use App\Services\CommandService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -14,18 +15,42 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Serializer\SerializerInterface;
 
 #[Route('/api/command')]
 final class CommandController extends AbstractController
 {
     private $entityManager;
+    private $commandService;
     private $logger;
 
-    public function __construct(EntityManagerInterface $entityManager, LoggerInterface $logger)
+    public function __construct(
+        EntityManagerInterface $entityManager, CommandService $commandService, LoggerInterface $logger)
     {
         $this->entityManager = $entityManager;
+        $this->commandService = $commandService;
         $this->logger = $logger;
     }
+
+    #[Route('/list', methods: ['GET'])]
+    public function list(Request $request, SerializerInterface $serializer): JsonResponse
+    {
+        try {
+            $user = $this->getUser();
+
+            $commands = $this->entityManager->getRepository(Command::class)->findOneBy(['user' => $user]);
+            if (!$commands) {
+                return new JsonResponse(['error' => 'no command user'], Response::HTTP_NO_CONTENT);
+            }
+         
+            $dataCommands = $this->commandService->getCommandData($request, $commands, $serializer);
+            return new JsonResponse($dataCommands, Response::HTTP_ACCEPTED);
+        } catch (\Throwable $e) {
+            $this->logger->error('error recovery commands', ['error' => $e->getMessage()]);
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
 
     #[Route('/add', methods: ['POST'])]
     public function add(Request $request): JsonResponse

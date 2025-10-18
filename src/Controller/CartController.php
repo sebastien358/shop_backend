@@ -29,7 +29,7 @@ final class CartController extends AbstractController
     }
 
     #[Route('/items/list', methods: ['GET'])]
-    public function list(SerializerInterface $serializer): JsonResponse
+    public function list(Request $request, SerializerInterface $serializer): JsonResponse
     {
         try {
             $user = $this->getUser();
@@ -40,11 +40,22 @@ final class CartController extends AbstractController
             }
             $items = $cart->getCartItems();
 
-            $dataItems = $serializer->normalize($items, 'json', ['groups' => ['cart', 'cart-items', 'product', 'picture'],
+            $dataItems = $serializer->normalize($items, 'json', ['groups' => ['cart', 'cart-items', 'products', 'pictures'],
                 'circular_reference_handler' => function ($object) {
                     return $object->getId();
                 }
             ]);
+
+            $baseUrl = $request->getSchemeAndHttpHost();
+            foreach ($dataItems as &$item) {
+                if(isset($item['product']['pictures'])) {
+                    foreach ($item['product']['pictures'] as &$picture) {
+                        if (isset($picture['filename'])) {
+                            $picture['filename'] = $baseUrl . '/images/' . $picture['filename'];
+                        }
+                    }
+                }
+            }
             return new JsonResponse($dataItems, Response::HTTP_OK);
         } catch (\Throwable $e) {
             $this->logger->error('Erreur lors de la récupération des items du panier', ['error' => $e->getMessage()]);

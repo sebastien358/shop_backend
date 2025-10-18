@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\CommandItemsRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: CommandItemsRepository::class)]
 class CommandItems
@@ -11,23 +12,29 @@ class CommandItems
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['command-items'])]
     private ?int $id = null;
 
     #[ORM\Column]
+    #[Groups(['command-items'])]
     private ?string $title = null;
 
     #[ORM\Column]
+    #[Groups(['command-items'])]
     private ?int $quantity = null;
 
     #[ORM\Column]
+    #[Groups(['command-items'])]
     private ?float $price = null;
 
     #[ORM\ManyToOne(targetEntity: Command::class, inversedBy: 'commandItems')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    #[Groups(['command-items'])]
     private ?Command $command = null;
 
     #[ORM\ManyToOne(targetEntity: Product::class, inversedBy: 'commandItems')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    #[Groups(['command-items'])]
     private ?Product $product = null;
 
     public function getId(): ?int

@@ -22,8 +22,8 @@ use Symfony\Component\Serializer\SerializerInterface;
 class ProductAdminController extends AbstractController
 {
     private $entityManager;
-    private $productService;
     private $fileUploader;
+    private $productService;
     private $logger;
 
     public function __construct(
@@ -108,7 +108,7 @@ class ProductAdminController extends AbstractController
             }
 
             $this->entityManager->remove($product);
-
+            
             try {
                 $this->entityManager->flush();
                 return new JsonResponse(['success' => true, 'success delete product' => Response::HTTP_CREATED]);
