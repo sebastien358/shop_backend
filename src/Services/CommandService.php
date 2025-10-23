@@ -10,7 +10,7 @@ class CommandService
 {
     public function getCommandData(Request $request, $commands, SerializerInterface $serializer): ?array
     {
-        if ($commands) {
+        if (is_array($commands)) {
 
             $dataCommands = $serializer->normalize($commands, 'json', ['groups' =>
                 ['commands', 'commandItems', 'products', 'pictures'],
@@ -36,7 +36,9 @@ class CommandService
 
             return $dataCommands;
         } else {
-            return null;
+            $dataCommand = $serializer->normalize($commands, 'json', ['groups' => ['commands']]);
+
+            return $dataCommand;
         }
     }
 }

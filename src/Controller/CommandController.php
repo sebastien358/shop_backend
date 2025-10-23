@@ -79,6 +79,27 @@ final class CommandController extends AbstractController
         }
     }
 
+    // Récupération d'une commande pour modifier les données utilisateur
+
+    #[Route('/user/{id}', methods: ['GET'])]
+    public function currentId(int $id, Request $request, SerializerInterface $serializer): JsonResponse
+    {
+        try {
+            $user = $this->getUser();
+
+            $commands = $this->entityManager->getRepository(Command::class)->findOneBy(['user' => $user, 'id' => $id]);
+            if (!$commands) {
+                return new JsonResponse(['error' => 'no command user'], Response::HTTP_NO_CONTENT);
+            }
+
+            $dataCommand = $this->commandService->getCommandData($request, $commands, $serializer);
+            return new JsonResponse($dataCommand, Response::HTTP_OK);
+        } catch (\Throwable $e) {
+            $this->logger->error('error recovery commands', ['error' => $e->getMessage()]);
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
     // Passer une commande utilidateur
 
     #[Route('/add', methods: ['POST'])]
