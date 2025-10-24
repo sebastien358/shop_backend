@@ -151,6 +151,39 @@ final class CommandController extends AbstractController
         }
     }
 
+    #[Route('/edit/{id}', methods: ['POST'])]
+    public function edit(int $id, Request $request): JsonResponse
+    {
+        try {
+            $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+
+            $user = $this->getUser();
+
+            $command = $this->entityManager->getRepository(Command::class)->findOneBy(['user' => $user, 'id' => $id]);
+            if (!$command) {
+                return new JsonResponse(['error' => 'no command user'], Response::HTTP_NOT_FOUND);
+            }
+
+            $form = $this->createForm(CommandType::class, $command);
+            $form->submit($data);
+            if (!$form->isSubmitted() || !$form->isValid()) {
+                $errors = $this->getErrorMessages($form);
+                return new JsonResponse(['errors'=> $errors], Response::HTTP_BAD_REQUEST);
+            }
+
+            try {
+                $this->entityManager->flush();
+                return new JsonResponse(['success' => true, 'message' => 'Commande mise à jour avec succès'], Response::HTTP_OK);
+            } catch (\Exception $e) {
+                $this->logger->error('error edit command user', ['error' => $e->getMessage()]);
+                return new JsonResponse(['errors' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+            }
+        } catch (\Throwable $e) {
+            $this->logger->error('error edit command user', ['error' => $e->getMessage()]);
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
     private function getErrorMessages(FormInterface $form): array
     {
         $errors = [];

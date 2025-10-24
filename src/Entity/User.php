@@ -27,11 +27,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $email = null;
 
     #[ORM\Column(type: 'string', nullable: true)]
-    #[Groups(['users', 'user'])]
     private ?string $resetToken = null;
 
     #[ORM\Column(type: 'datetime', nullable: true)]
-    #[Groups(['users', 'user'])]
     private ?DateTime $resetTokenExpiresAt = null;
 
     /**

@@ -34,7 +34,8 @@ class CommandType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => Command::class,
-            'csrf_protection' => false
+            'csrf_protection' => false,
+            'allow_extra_fields' => true,
         ]);
     }
 }
